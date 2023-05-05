@@ -28,7 +28,7 @@ def get_mfcc(audio_recording, genre):
     #plt.show()
     plt.close()
 
-genres = ['rock', 'blues', 'classical', 'country', 'disco', 'pop', 'raggae']
+genres = ['rock', 'blues', 'classical', 'country', 'disco', 'pop', 'reggae']
 
 for genre in genres:
     filename = f"Data/genres_original/{genre}/"
