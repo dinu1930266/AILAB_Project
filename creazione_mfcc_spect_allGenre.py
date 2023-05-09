@@ -92,4 +92,4 @@ rf.fit(X_train, y_train)
 accuracy = rf.score(X_test, y_test)
 print("Accuracy:", accuracy)
 
-print("ciao")
+
