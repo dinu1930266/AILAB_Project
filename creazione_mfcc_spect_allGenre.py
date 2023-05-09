@@ -91,3 +91,5 @@ rf.fit(X_train, y_train)
 # Valutare l'accuratezza del modello sul set di test
 accuracy = rf.score(X_test, y_test)
 print("Accuracy:", accuracy)
+
+print("ciao")
