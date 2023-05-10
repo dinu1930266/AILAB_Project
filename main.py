@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 import librosa
 from keras import layers
 from keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, 
-                          Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D)
+                          Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, Dropout)
 from keras.models import Model, load_model
 from keras.preprocessing import image
 from keras.utils import layer_utils
-# import pydot
-# from IPython.display import SVG
+import pydot
+#from IPython.display import SVG
 from keras.utils.vis_utils import model_to_dot
 from keras.utils import plot_model
 from keras.optimizers import Adam
@@ -24,6 +24,7 @@ from pydub import AudioSegment
 import shutil
 from keras.preprocessing.image import ImageDataGenerator
 import random
+
 
 def get_melspectrogram(audio_recording, genre):
     y, sr = librosa.load(audio_recording, duration=3)
@@ -52,6 +53,7 @@ if 'content' not in os.listdir():
 
     # creiamo le cartelle spectogram3sec/train, /test, e audio3sec con all'interno le cartelle con i vari generi musicali 
     for g in genres:
+        ".join() utilizzato per unire gli elementi di una sequenza di stringhe in una sola stringa utilizzando un delimitatore specificato"
         path_audio = os.path.join('content/audio3sec',f'{g}')
         os.makedirs(path_audio)
         path_train = os.path.join('content/spectrograms3sec/train',f'{g}')
@@ -59,7 +61,7 @@ if 'content' not in os.listdir():
         os. makedirs(path_train)
         os. makedirs(path_test)
 
-# qui splittiamo gli audio in 10 parti (ogni brano originale dura 10 secondi, perciò ogni brano splittato avrà una durata di 3 secondi) 
+# qui splittiamo gli audio in 3 parti (ogni brano originale dura 30 secondi, perciò ogni brano splittato avrà una durata di 10 secondi) 
 # e li inseriamo nella cartella audio3sec
 i = 0
 for g in genres:
@@ -69,11 +71,11 @@ for g in genres:
         song  =  os.path.join(f'Data/genres_original/{g}',f'{filename}')
         if filename[0]!= '.':
             j = j+1
-            for w in range(0,10):
+            for w in range(0,3):
                 i = i+1
                 #print(i)
-                t1 = 3*(w)*1000
-                t2 = 3*(w+1)*1000
+                t1 = 10*(w)*1000
+                t2 = 10*(w+1)*1000
                 newAudio = AudioSegment.from_wav(song)
                 new = newAudio[t1:t2]
                 new.export(f'content/audio3sec/{g}/{g+str(j)+str(w)}.wav', format="wav")
@@ -119,3 +121,64 @@ ImageDataGenerator semplifica l'addestramento su grandi set di dati utilizzando 
 su un solo lotto per passaggio, quindi, durante l'addestramento, il generatore di dati carica solo un lotto nella memoria alla volta, 
 quindi non c'è esaurimento delle risorse di memoria
 """
+
+"""
+In questa funzione vengono applicati i vari strati di neuroni della rete neurale.
+"""
+def GenreModel(input_shape = (288,432,4),classes=9):
+  
+  X_input = Input(input_shape)
+
+  X = Conv2D(8,kernel_size=(3,3),strides=(1,1))(X_input)
+  X = BatchNormalization(axis=3)(X)
+  X = Activation('relu')(X)
+  X = MaxPooling2D((2,2))(X)
+  
+  X = Conv2D(16,kernel_size=(3,3),strides = (1,1))(X)
+  X = BatchNormalization(axis=3)(X)
+  X = Activation('relu')(X)
+  X = MaxPooling2D((2,2))(X)
+  
+  X = Conv2D(32,kernel_size=(3,3),strides = (1,1))(X)
+  X = BatchNormalization(axis=3)(X)
+  X = Activation('relu')(X)
+  X = MaxPooling2D((2,2))(X)
+
+  X = Conv2D(64,kernel_size=(3,3),strides=(1,1))(X)
+  X = BatchNormalization(axis=-1)(X)
+  X = Activation('relu')(X)
+  X = MaxPooling2D((2,2))(X)
+  
+  X = Conv2D(128,kernel_size=(3,3),strides=(1,1))(X)
+  X = BatchNormalization(axis=-1)(X)
+  X = Activation('relu')(X)
+  X = MaxPooling2D((2,2))(X)
+
+  
+  X = Flatten()(X)
+  
+  X = Dropout(rate=0.3)
+
+  X = Dense(classes, activation='softmax', name='fc' + str(classes))(X)
+
+  model = Model(inputs=X_input,outputs=X,name='GenreModel')
+
+  return model
+
+
+import keras.backend as K
+def get_f1(y_true, y_pred): #taken from old keras source code
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    recall = true_positives / (possible_positives + K.epsilon())
+    f1_val = 2*(precision*recall)/(precision+recall+K.epsilon())
+    return f1_val
+  
+
+model = GenreModel(input_shape=(288,432,4),classes=9)
+opt = Adam(learning_rate=0.0005)
+model.compile(optimizer = opt,loss='categorical_crossentropy',metrics=['accuracy',get_f1]) 
+
+model.fit_generator(train_generator,epochs=70,validation_data=vali_generator)
