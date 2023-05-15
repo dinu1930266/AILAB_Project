@@ -23,10 +23,29 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from pydub import AudioSegment
 import shutil
 from keras.preprocessing.image import ImageDataGenerator
+#from keras.preprocessing.image import img_to_array
 import random
 import keras.backend as K
 from keras.models import load_model
 import numpy as np
+from keras import layers
+from keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, 
+                          Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D,
+                          Dropout)
+from keras.models import Model, load_model
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from keras.initializers import glorot_uniform
+from keras.preprocessing.image import ImageDataGenerator
+from PIL import Image
+import librosa
+import numpy as np
+import librosa.display
+from pydub import AudioSegment
+import matplotlib.cm as cm
+from matplotlib.colors import Normalize
+from PIL import Image
+from numpy import asarray
 
 
 " utilizzato per ottenere lo spettogramma dei vari brani e salvarlo nel path specificato"
@@ -154,11 +173,11 @@ def addestra_modello():
 
     #model.fit_generator(train_generator,epochs=70,validation_data=vali_generator)
 
-    history = model.fit(train_generator, epochs=5, validation_data=vali_generator)
+    history = model.fit(train_generator, epochs=50, validation_data=vali_generator)
 
     accuracy = history.history['val_accuracy'][-1]
     print(accuracy)
-    model.save('my_model.h5')
+    model.save('my_model.h50')
     return model
 
 
@@ -169,50 +188,49 @@ crea_cartelle_necessarie(genres)
 
 # qui splittiamo gli audio in 3 parti (ogni brano originale dura 30 secondi, perciò ogni brano splittato avrà una durata di 10 secondi) 
 # e li inseriamo nella cartella audio3sec
-
-i = 0
-for g in genres:
-    j=0
-    print(f"{g}")
-    for filename in os.listdir(os.path.join('Data/genres_original',f"{g}")):
-        song  =  os.path.join(f'Data/genres_original/{g}',f'{filename}')
-        if filename[0]!= '.':
-            j = j+1
-            for w in range(0,3):
-                i = i+1
-                #print(i)
-                t1 = 10*(w)*1000
-                t2 = 10*(w+1)*1000
-                newAudio = AudioSegment.from_wav(song)
-                new = newAudio[t1:t2]
-                new.export(f'content/audio3sec/{g}/{g+str(j)+str(w)}.wav', format="wav")
-
+if not os.listdir('content/audio3sec/blues'):
+    i = 0
+    for g in genres:
+        j=0
+        print(f"{g}")
+        for filename in os.listdir(os.path.join('Data/genres_original',f"{g}")):
+            song  =  os.path.join(f'Data/genres_original/{g}',f'{filename}')
+            if filename[0]!= '.':
+                j = j+1
+                for w in range(0,3):
+                    i = i+1
+                    #print(i)
+                    t1 = 10*(w)*1000
+                    t2 = 10*(w+1)*1000
+                    newAudio = AudioSegment.from_wav(song)
+                    new = newAudio[t1:t2]
+                    new.export(f'content/audio3sec/{g}/{g+str(j)+str(w)}.wav', format="wav")
 
 
 # per ogni brano da 3 secondi di ogni genere generiamo lo spettogramma e lo salviamo in content/spectrograms3sec/train
-for genre in genres:
-    filename = f"content/audio3sec/{genre}/"
-    for file in os.listdir(filename):
-        if file[0]!= '.':
-            file_tot = filename+file
-            get_and_save_melspectrogram(file_tot, genre)
+if not os.listdir('content/spectrograms3sec/train/blues'):
+    for genre in genres:
+        filename = f"content/audio3sec/{genre}/"
+        for file in os.listdir(filename):
+            if file[0]!= '.':
+                file_tot = filename+file
+                get_and_save_melspectrogram(file_tot, genre)
 
 
 # Ora abbiamo i nostri dati completi, quindi dobbiamo dividere i dati in set di addestramento e set di convalida. 
 # I nostri dati completi sono nella directory spectrograms3sec/train, quindi dobbiamo prendere parte dei dati completi e 
 # spostarli nella nostra directory di test. 
 directory = "content/spectrograms3sec/train/"
-for g in genres:
-    filenames = os.listdir(os.path.join(directory,f"{g}"))
-    random.shuffle(filenames)
-    test_files = filenames[0:21]
-    # dato che io ho fatto una prova con meno file ho separato per 21, ma con il dataset originale
-    # test_files = filenames[0:100]
+if not os.listdir('content/spectrograms3sec/test/blues'):
+    for g in genres:
+        filenames = os.listdir(os.path.join(directory,f"{g}"))
+        random.shuffle(filenames)
+        test_files = filenames[0:100]
 
-    # Per ogni genere, mescoliamo casualmente i nomi dei file, selezioniamo i primi 100 nomi di file e 
-    # li spostiamo nella directory di test/convalida.
-    for f in test_files:
-        shutil.move(directory + f"{g}"+ "/" + f,"content/spectrograms3sec/test/" + f"{g}")
+        # Per ogni genere, mescoliamo casualmente i nomi dei file, selezioniamo i primi 100 nomi di file e 
+        # li spostiamo nella directory di test/convalida.
+        for f in test_files:
+            shutil.move(directory + f"{g}"+ "/" + f,"content/spectrograms3sec/test/" + f"{g}")
 
 # Dopo l'esecuzione di queste righe di codice nella cartella train rimarranno 200 brani per ogni genere,
 # mentre nella cartella test ci saranno 100 brani per ogni genere.
@@ -222,11 +240,11 @@ for g in genres:
 custom_objects = {'get_f1': get_f1}
 
 # caricamento del modello già addestrato e salvato come 'my_model.h5'
-model = tf.keras.models.load_model('my_model.h5', custom_objects=custom_objects)
+model = tf.keras.models.load_model('my_model.h50', custom_objects=custom_objects)
 
 audio_recording = 'maroon5.wav'
-start_time = 98 # start time in seconds (1 minute and 38 seconds)
-duration = 10 # duration in seconds
+start_time = 10 # start time in seconds (1 minute and 38 seconds)
+duration = 300 # duration in seconds
 
 # Load the audio recording
 y, sr = librosa.load(audio_recording, sr=None)
@@ -239,29 +257,51 @@ end_frame = int((start_time + duration) * sr)
 audio_segment = y[start_frame:end_frame]
 
 # Pad or trim the audio segment to the desired length
-audio_segment = librosa.util.fix_length(audio_segment, size=(432 * sr // 128))
+audio_segment = librosa.util.fix_length(audio_segment, size=221000)
 
 # Compute the mel spectrogram
 S = librosa.feature.melspectrogram(y=audio_segment, sr=sr, n_mels=288, fmax=8000)
-S_dB = librosa.power_to_db(S, ref=np.max)
-S_dB = np.expand_dims(S_dB, axis=-1)
-S_dB = np.expand_dims(S_dB, axis=0)
+#S_dB = librosa.power_to_db(S, ref=np.max)
+#S_dB = np.expand_dims(S_dB, axis=-1)
+#S_dB = np.expand_dims(S_dB, axis=0)
 
-"""ValueError: Input 0 of layer "GenreModel" is incompatible with the layer: expected shape=(None, 288, 432, 4), found shape=(None, 288, 317, 1)
-come risolvo l'errore
-RISOLTO
-"""
+# """ValueError: Input 0 of layer "GenreModel" is incompatible with the layer: expected shape=(None, 288, 432, 4), found shape=(None, 288, 317, 1)
+# come risolvo l'errore
+# RISOLTO
+# """
+# #np.reshape(image,(1,288,432,4))
+#S_dB = np.reshape((1,288,432,4))
+
+tf.reshape(S,(None, 288,432, 4))
+
+# image = Image.open(S)
+
+
+#image = np.reshape(S_dB,(1,288,432,4))
+
+prediction = model.predict(S)
+
+prediction = prediction.reshape((9,)) 
+
+
+class_label = np.argmax(prediction)
+
 
 # Pad the input with zeros to match the expected shape of the model
-S_dB_padded = np.zeros((S_dB.shape[0], 288, 432, 4))
+#S_dB_padded = np.zeros((S_dB.shape[0], 288, 432, 4))
+# print(S_dB_padded)
+
+"""
+ValueError: Input 0 of layer "GenreModel" is incompatible with the layer: expected shape=(None, 288, 432, 4), found shape=(32, 317)
+"""
 
 # Make the prediction using the padded input
-prediction = model.predict(S_dB_padded)
-predicted_class = np.argmax(prediction)
-"""
-Il numero che viene passato alla funzione get_and_save_melspectrogram corrisponde alla classe di appartenenza del brano, 
-ovvero il genere musicale. Nel codice, viene utilizzato come indice per salvare lo spettrogramma nella directory corrispondente alla classe del brano. 
-Il numero 0 indica ad esempio il genere "blues", il numero 1 il genere "classica", e così via.
-"""
-print('Il genere predetto è:', genres[predicted_class])
+# prediction = model.predict(S)
+# predicted_class = np.argmax(prediction)
+# """
+# Il numero che viene passato alla funzione get_and_save_melspectrogram corrisponde alla classe di appartenenza del brano, 
+# ovvero il genere musicale. Nel codice, viene utilizzato come indice per salvare lo spettrogramma nella directory corrispondente alla classe del brano. 
+# Il numero 0 indica ad esempio il genere "blues", il numero 1 il genere "classica", e così via.
+# """
+print('Il genere predetto è:', class_label) #genres[predicted_class])
 
