@@ -104,14 +104,6 @@ from matplotlib.colors import Normalize
 from PIL import Image
 from numpy import asarray
 import sys
-sys.path.append('/to/ffmpeg')
-
-
-audio_data_set_path = 'content1/audio3sec/'
-metadata = pd.read_csv('Data/features_3_sec.csv')
-metadata.head()
-
-genres = ["blues", "classical", "country", "disco", "hiphop", "jazz", "metal", "pop", "reggae", "rock"]
 
 
 def crea_cartelle_necessarie(genres):
@@ -119,15 +111,14 @@ def crea_cartelle_necessarie(genres):
     #print('listdir:', os.listdir())
 
     # Perciò se la cartella 'content' non è presente nel path creiamo le varie directory:
-    if 'content1' not in os.listdir():
+    if 'content_10sec' not in os.listdir():
 
         # creiamo le cartelle spectogram3sec/train, /test, e audio3sec con all'interno le cartelle con i vari generi musicali 
         for g in genres:
             ".join() utilizzato per unire gli elementi di una sequenza di stringhe in una sola stringa utilizzando un delimitatore specificato"
-            path_audio = os.path.join('content1/audio3sec/',f'{g}')
+            path_audio = os.path.join('content_10sec/audio10sec/',f'{g}')
             os.makedirs(path_audio)
 
-crea_cartelle_necessarie(genres)
 
 def split_audio(genres):
     # qui splittiamo gli audio in 3 parti (ogni brano originale dura 30 secondi, perciò ogni brano splittato avrà una durata di 10 secondi) 
@@ -141,22 +132,157 @@ def split_audio(genres):
             #print(j)
             song  =  os.path.join(f'Data/genres_original/{g}',f'{filename}')
             if (filename[0]!= '.'):
-                for w in range(0,10):
+                for w in range(0,3):
                     i = i+1
                     #print(i)
-                    t1 = 3*(w)*1000
-                    t2 = 3*(w+1)*1000
+                    t1 = 10*(w)*1000
+                    t2 = 10*(w+1)*1000
                     newAudio = AudioSegment.from_wav(song)
                     new = newAudio[t1:t2]
-                    if len(str(j)) == 1:
-                        new.export(f'content1/audio3sec/{g}/{g}.0000{j}.{w}.wav', format="wav")
-                        
-                    else:
-                        new.export(f'content1/audio3sec/{g}/{g}.000{j}.{w}.wav', format="wav")
+                    new.export(f'content_10sec/audio10sec/{g}/{g}.{j}.{w}.wav', format="wav")
+
                 j = j+1
 
-split_audio(genres)
 
+genres = ["blues", "classical", "country", "disco", "hiphop", "jazz", "metal", "pop", "reggae", "rock"]
+
+
+crea_cartelle_necessarie(genres)
+
+
+#split_audio(genres)
+
+
+
+def get_features(path_audio, nome_audio, genre):
+    # Load the audio file
+    audio_recording = nome_audio
+    y, sr = librosa.load(path_audio, sr=None)
+
+    # Extract features
+    chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
+    chroma_stft_mean = chroma_stft.mean()
+    chroma_stft_var = chroma_stft.var()
+
+    rms = librosa.feature.rms(y=y)
+    rms_mean = rms.mean()
+    rms_var = rms.var()
+
+    spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
+    spectral_centroid_mean = spectral_centroid.mean()
+    spectral_centroid_var = spectral_centroid.var()
+
+    spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)
+    spectral_bandwidth_mean = spectral_bandwidth.mean()
+    spectral_bandwidth_var = spectral_bandwidth.var()
+
+    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+    rolloff_mean = rolloff.mean()
+    rolloff_var = rolloff.var()
+
+    zero_crossing_rate = librosa.feature.zero_crossing_rate(y)
+    zero_crossing_rate_mean = zero_crossing_rate.mean()
+    zero_crossing_rate_var = zero_crossing_rate.var()
+
+    harmony = librosa.effects.harmonic(y)
+    harmony_mean = harmony.mean()
+    harmony_var = harmony.var()
+
+    perceptr = librosa.effects.percussive(y)
+    perceptr_mean = perceptr.mean()
+    perceptr_var = perceptr.var()
+
+    tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+    mfcc_mean = mfcc.mean(axis=1)
+    mfcc_var = mfcc.var(axis=1)
+
+    mfcc1_mean = mfcc[0].mean()
+    mfcc1_var = mfcc[0].var()
+    mfcc2_mean = mfcc[1].mean()
+    mfcc2_var = mfcc[1].var()
+    mfcc3_mean = mfcc[2].mean()
+    mfcc3_var = mfcc[2].var()
+    mfcc4_mean = mfcc[3].mean()
+    mfcc4_var = mfcc[3].var()
+    mfcc5_mean = mfcc[4].mean()
+    mfcc5_var = mfcc[4].var()
+    mfcc6_mean = mfcc[5].mean()
+    mfcc6_var = mfcc[5].var()
+    mfcc7_mean = mfcc[6].mean()
+    mfcc7_var = mfcc[6].var()
+    mfcc8_mean = mfcc[7].mean()
+    mfcc8_var = mfcc[7].var()
+    mfcc9_mean = mfcc[8].mean()
+    mfcc9_var = mfcc[8].var()
+    mfcc10_mean = mfcc[9].mean()
+    mfcc10_var = mfcc[9].var()
+    mfcc11_mean = mfcc[10].mean()
+    mfcc11_var = mfcc[10].var()
+    mfcc12_mean = mfcc[11].mean()
+    mfcc12_var = mfcc[11].var()
+    mfcc13_mean = mfcc[12].mean()
+    mfcc13_var = mfcc[12].var()
+    mfcc14_mean = mfcc[13].mean()
+    mfcc14_var = mfcc[13].var()
+    mfcc15_mean = mfcc[14].mean()
+    mfcc15_var = mfcc[14].var()
+    mfcc16_mean = mfcc[15].mean()
+    mfcc16_var = mfcc[15].var()
+    mfcc17_mean = mfcc[16].mean()
+    mfcc17_var = mfcc[16].var()
+    mfcc18_mean = mfcc[16].mean()
+    mfcc18_var = mfcc[17].var()
+    mfcc19_mean = mfcc[17].mean()
+    mfcc19_var = mfcc[18].var()
+    mfcc20_mean = mfcc[19].mean()
+    mfcc20_var = mfcc[19].var()
+
+
+    # Prepare the extracted features
+    length = librosa.get_duration(y=y, sr=sr)
+    
+    features = [
+        nome_audio, length, chroma_stft_mean, chroma_stft_var, rms_mean, rms_var,
+        spectral_centroid_mean, spectral_centroid_var, spectral_bandwidth_mean, spectral_bandwidth_var,
+        rolloff_mean, rolloff_var, zero_crossing_rate_mean, zero_crossing_rate_var,
+        harmony_mean, harmony_var, perceptr_mean, perceptr_var, tempo,
+        mfcc1_mean, mfcc1_var,mfcc2_mean,mfcc2_var,mfcc3_mean,mfcc3_var,mfcc4_mean,mfcc4_var,mfcc5_mean,mfcc5_var,mfcc6_mean,
+        mfcc6_var,mfcc7_mean,mfcc7_var,mfcc8_mean,mfcc8_var,mfcc9_mean,mfcc9_var,mfcc10_mean,mfcc10_var,mfcc11_mean,
+        mfcc11_var,mfcc12_mean,mfcc12_var,mfcc13_mean,mfcc13_var,mfcc14_mean,mfcc14_var,mfcc15_mean,mfcc15_var,mfcc16_mean,
+        mfcc16_var,mfcc17_mean,mfcc17_var,mfcc18_mean,mfcc18_var,mfcc19_mean,mfcc19_var,mfcc20_mean,mfcc20_var, genre]
+
+    # print(len(features))
+    # print(f'{nome_audio}: {features}\n\n')
+    return features
+
+
+# csv_array =[]
+# csv_array.append(['filename','length','chroma_stft_mean','chroma_stft_var','rms_mean','rms_var','spectral_centroid_mean',
+#                   'spectral_centroid_var','spectral_bandwidth_mean','spectral_bandwidth_var','rolloff_mean','rolloff_var',
+#              'zero_crossing_rate_mean','zero_crossing_rate_var','harmony_mean','harmony_var','perceptr_mean','perceptr_var',
+#              'tempo','mfcc1_mean','mfcc1_var','mfcc2_mean','mfcc2_var','mfcc3_mean','mfcc3_var','mfcc4_mean','mfcc4_var','mfcc5_mean',
+#              'mfcc5_var','mfcc6_mean','mfcc6_var','mfcc7_mean','mfcc7_var','mfcc8_mean','mfcc8_var','mfcc9_mean','mfcc9_var','mfcc10_mean',
+#              'mfcc10_var','mfcc11_mean','mfcc11_var','mfcc12_mean','mfcc12_var','mfcc13_mean','mfcc13_var','mfcc14_mean','mfcc14_var',
+#              'mfcc15_mean','mfcc15_var','mfcc16_mean','mfcc16_var','mfcc17_mean','mfcc17_var','mfcc18_mean','mfcc18_var','mfcc19_mean',
+#              'mfcc19_var','mfcc20_mean','mfcc20_var','label'])
+
+
+# for genre in genres:
+#     for audio in os.listdir(f'content_10sec/audio10sec/{genre}'):
+#         print(audio)
+#         path_audio = f'content_10sec/audio10sec/{genre}/{audio}'
+#         feature = get_features(path_audio, audio, genre)
+#         csv_array.append(feature)
+
+# import csv
+
+# with open('features_10_sec.csv', 'w', newline='') as file_csv:
+#     writer = csv.writer(file_csv)
+
+#     # Scrivi i dati nel file CSV
+#     writer.writerows(csv_array)
 
 def features_extractor(file_name):
     audio, sample_rate = librosa.load(file_name, res_type='kaiser_fast')
@@ -164,7 +290,10 @@ def features_extractor(file_name):
     mfcss_scaled_features = np.mean(mfcss_features.T, axis=0)
     return mfcss_scaled_features
 
-# rimuove 
+audio_data_set_path = 'content_10sec/audio10sec/'
+metadata = pd.read_csv('features_10_sec.csv')
+metadata.head()
+
 metadata.drop(labels=552, axis=0, inplace=True)
 
 from tqdm import tqdm
@@ -231,36 +360,45 @@ model.add(Dense(num_labels, activation='softmax'))
 
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
 
-import time
-t = time.localtime()
-current_time = time.strftime("%H:%M:%S", t)
+def addestra_modello():
+    import time
+    t = time.localtime()
+    current_time = time.strftime("%H:%M:%S", t)
 
-from tensorflow.keras.callbacks import ModelCheckpoint
-from datetime import datetime
+    from tensorflow.keras.callbacks import ModelCheckpoint
+    from datetime import datetime
 
-num_batch_size = 32
+    num_batch_size = 32
 
-#checkpointer = ModelCheckpoint(filepath='saved_models/audio_classification_{current_time}.hdf5', verbose = 1, save_best_only= True)
+    #checkpointer = ModelCheckpoint(filepath='saved_models/audio_classification_{current_time}.hdf5', verbose = 1, save_best_only= True)
 
-start = datetime.now()
-history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs = 50, batch_size = num_batch_size)#, callbacks=[checkpointer], verbose=1)
+    start = datetime.now()
+    history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs = 500, batch_size = num_batch_size)#, callbacks=[checkpointer], verbose=1)
 
-" history = model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=300, batch_size=128)"
-duration = datetime.now()- start
+    duration = datetime.now()- start
 
-print(duration)
+    print(duration)
 
-model.evaluate(X_test, y_test, verbose=0)
+    model.evaluate(X_test, y_test, verbose=0)
 
-pd.DataFrame(history.history).plot(figsize=(12,6))
-plt.show()
+    pd.DataFrame(history.history).plot(figsize=(12,6))
+    plt.show()
 
-#model.predict_classes(X_test)
-model.predict(X_test)
+    #model.predict_classes(X_test)
+    model.predict(X_test)
+    model.save('my_model.h500_1')
+    return model
 
+def carica_modello():
+    model = tf.keras.models.load_model('my_model.h500_1')
+    return model
+
+
+#model = addestra_modello()
+model = carica_modello()
 
 #filename = 'Data/genres_original/jazz/jazz.00090.wav'
-filename = 'ludwig.wav'
+filename = 'eminem.wav'
 audio, sample_rate = librosa.load(filename, res_type='kaiser_fast')
 mfcss_features = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=40)
 mfcss_scaled_features = np.mean(mfcss_features.T, axis=0)
